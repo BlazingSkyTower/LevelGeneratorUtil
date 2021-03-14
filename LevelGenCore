@@ -1,0 +1,184 @@
+//10,2,100000,4,3,25,8,15//
+
+int e =10;
+int [][][] s = new int [e][e][e];
+int [][][] ts= new int [e][e][e];
+int d = -1;
+float unit =0;
+float mx =0;
+float my =0;
+
+int plane = 3;
+int thresh = 100000;
+int pV = 4;
+int dN = 3;
+int actProb = 25;
+int pp0 = 8;
+int pp1 = 15;
+
+float viewD =12;
+float rr = 0f;
+float rInc = .04;
+
+void setup () {
+  size (900, 900, P3D);
+  background (105);
+  int f =0;
+  for (int i=0; i < e; i++) {
+    for (int j=0; j < e; j++) {
+      for (int k=0; k < e; k++) {
+        f = int(random(0, 1000001));
+        if (f <= thresh) {
+          s [i][j][k] = 1;
+          ts [i][j][k]= 1;
+        } else {
+          s [i][j][k] = 0;
+          ts [i][j][k] = 0;
+        }
+      }
+    }
+  }
+  unit = width / e;
+  stroke (0,255,0);
+  strokeWeight (2);
+  fill (45);
+  camera ();
+  smooth ();
+  lights ();
+  frameRate (32);
+}
+
+void draw () {
+  mx=mouseX;
+  my=mouseY;
+  background (105);
+  translate (width/2,height/2,-width/2);
+  rotateX (-PI/viewD);
+  rr += rInc*(frameRate/32);
+  rotateY (rr);
+  for (int i=0; i < e; i++) {
+    for (int j=0; j < e; j++) {
+      for (int k=0; k < e; k++) {
+        if (s [i][j][k] == 1) {
+          float tx = unit * float (i);
+          float ty = unit * float (j);
+          float tz = unit * float (k);
+          translate (tx-(width/2), ty-(height/2), -tz+(width/2));
+          box(unit);
+          translate (-(tx-(width/2)), -(ty-(height/2)), -(-tz+(width/2)));
+        }
+      }
+    }
+  }
+  
+  rotateY (-rr);
+  rotateX (PI/viewD);
+  translate (-width/2,-height/2,width/2);
+}
+
+void mouseReleased() {
+  if (my <= height/2) {
+    if (mx <= width/2) {
+      for (int i=0; i < e; i++) {
+        for (int j=0; j < e; j++) {
+          for (int k=0; k < e; k++) {
+            if (s [i][j][k] == 0) {
+              int p = checkNeighbors (i, j, k);
+              if (p >= pV) {
+                float pr = random (0, 1);
+                if (pr <= actProb/float (p)) {
+                  ts [i][j][k] = 1;
+                }
+              }
+            }
+          }
+        }
+      }
+    } else if (mx > width/2) {
+      for (int i=0; i < e; i++) {
+        for (int j=0; j < e; j++) {
+          for (int k=0; k < e; k++) {
+            if (s [i][j][k] == 1) {
+              int gg = checkNeighbors (i,j,k);
+              if (gg < dN) {
+                ts [i][j][k] = 0;
+              }
+            }
+          }
+        }
+      }
+    }
+    for (int i=0; i < e; i++) {
+      for (int j=0; j < e; j++) {
+        for (int k=0; k < e; k++) {
+          s[i][j][k] = ts[i][j][k];
+        }
+      }
+    }
+  } else{
+    if (mx <= width/2) {
+      int f =0;
+      for (int i=0; i < e; i++) {
+        for (int j=0; j < e; j++) {
+          for (int k=0; k < e; k++) {
+            f = int(random(0, 1000001));
+            if (f <= thresh) {
+              s [i][j][k] = 1;
+              ts [i][j][k]= 1;
+            } else {
+              s [i][j][k] = 0;
+              ts [i][j][k] = 0;
+            }
+          }
+        }
+      }
+    } else if (mx > width/2) {
+      for (int i=0; i < e; i++) {
+        for (int j=0; j < e; j++) {
+          for (int k=0; k < e; k++) {
+            if (s [i][j][k] == 1) {
+              int gg = checkNeighbors (i,j,k);
+              if (gg > pp0 && gg <pp1) {
+                ts [i][j][k] = 0;
+              }
+            }
+          }
+        }
+      }
+    }
+    for (int i=0; i < e; i++) {
+      for (int j=0; j < e; j++) {
+        for (int k=0; k < e; k++) {
+          s[i][j][k] = ts[i][j][k];
+        }
+      }
+    }
+  }
+}
+
+int checkNeighbors (int i_, int j_, int k_) {
+  int i = i_;
+  int j = j_;
+  int k = k_;
+  int r = 0;
+  for (int ti=0; ti < 3; ti++) {
+    for (int tj=0;tj <plane;tj++){
+      for (int tk=0; tk < 3; tk++) {
+        
+        r += s [loop (i+(ti-1))][j][loop (k-(tk-1))];
+      }
+    }
+  }
+  println (r);
+  return (r);
+}
+
+int loop (int t_) {
+  int t=t_;
+  if (t < 0) {
+    t = e-1;
+  } else if (t == e) {
+    t = 0;
+  }
+  return (t);
+}
